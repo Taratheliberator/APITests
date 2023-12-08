@@ -10,7 +10,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.example.data.User;
 
-
+import static org.example.specification.Specification.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,14 +20,6 @@ import static io.restassured.RestAssured.given;
 
 public class UserAvatarTest {
 
-    private static RequestSpecification spec;
-
-    @BeforeClass
-    public static void createRequestSpecification() {
-        spec = new RequestSpecBuilder()
-                .setBaseUri("https://reqres.in/api")
-                .build();
-    }
 
     @DataProvider(name = "pageProvider")
     public Object[][] providePages() {
@@ -36,7 +28,7 @@ public class UserAvatarTest {
 
     @Test(dataProvider = "pageProvider")
     public void testAvatarUniqueness(int page) {
-        Response response = given().spec(spec)
+        Response response = given().spec(createRequestSpecification())
                 .when()
                 .get("/users?page=" + page)
                 .then()
@@ -54,22 +46,30 @@ public class UserAvatarTest {
         Assert.assertEquals(uniqueAvatarFileNames.size(), avatarUrls.size(), "Avatar filenames are not unique");
     }
 
-    @Test
-    public void testUserApi() {
+    @Test(dataProvider = "pageProvider")
+    public void testUserApi(int page) {
 
-        ApiResponse response = given().spec(spec)
+        ApiResponse response = given().spec(createRequestSpecification())
                 .when()
-                .get("/users?page=2")
+                .get("/users?page=" + page)
                 .then()
                 .extract()
                 .as(ApiResponse.class);
 
-        // Теперь вы можете использовать объект response для проверок
-        // Например, проверка уникальности имен файлов аватаров:
+        System.out.println("Полученные данные:");
+        System.out.println("Страница: " + response.getPage());
+        System.out.println("На странице: " + response.getPer_page());
+        System.out.println("Всего пользователей: " + response.getTotal());
+        System.out.println("Всего страниц: " + response.getTotal_pages());
+        System.out.println("Пользователи:");
+        response.getData().forEach(user -> {
+            System.out.println("ID: " + user.getId() + ", Имя: " + user.getFirst_name() + " " + user.getLast_name() + ", Email: " + user.getEmail() + ", Avatar: " + user.getAvatar());
+        });
+
         Set<String> uniqueAvatarFileNames = response.getData().stream()
                 .map(User::getAvatar)
                 .collect(Collectors.toSet());
 
-        Assert.assertEquals(uniqueAvatarFileNames.size(), response.getData().size(), "Avatar filenames are not unique");
+        Assert.assertEquals(uniqueAvatarFileNames.size(), response.getData().size(), "Имена файлов аватаров пользователей не уникальны");
     }
 }

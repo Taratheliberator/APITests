@@ -1,45 +1,61 @@
 package in.regres;
 
-
-import io.restassured.RestAssured;
-import io.restassured.path.json.JsonPath;
-import io.restassured.response.ExtractableResponse;
-import io.restassured.response.Response;
+import io.qameta.allure.Step;
+import org.example.data.ApiResponse;
+import org.example.data.User;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.nullValue;
-
+import static org.example.specification.Specification.createRequestSpecification;
 
 public class APITests {
 
-    @Test
-    public void testAvatarUniqueness() {
-        RestAssured.baseURI = "https://reqres.in/api";
+    @DataProvider(name = "pageProvider")
+    public Object[][] providePages() {
+        return new Object[][]{{2}};
+    }
 
-        Response response = given()
+    @Test(dataProvider = "pageProvider")
+    public void testUserApi(int page) {
+        ApiResponse response = fetchUserData(page);
+        printUserData(response);
+        checkAvatarUniqueness(response);
+    }
+
+    @Step("Получение данных пользователя для страницы: {page}")
+    private ApiResponse fetchUserData(int page) {
+        return given().spec(createRequestSpecification())
                 .when()
-                .get("/users?page=2")
+                .get("/users?page=" + page)
                 .then()
                 .extract()
-                .response();
+                .as(ApiResponse.class);
+    }
 
-        // Выводим весь JSON ответ
-        System.out.println("Полученный JSON ответ:");
-        response.prettyPrint();
+    @Step("Вывод данных пользователя")
+    private void printUserData(ApiResponse response) {
+        System.out.println("Полученные данные:");
+        System.out.println("Страница: " + response.getPage());
+        System.out.println("На странице: " + response.getPer_page());
+        System.out.println("Всего пользователей: " + response.getTotal());
+        System.out.println("Всего страниц: " + response.getTotal_pages());
+        System.out.println("Пользователи:");
+        response.getData().forEach(user -> {
+            System.out.println("ID: " + user.getId() + ", Имя: " + user.getFirst_name() + " " + user.getLast_name() + ", Email: " + user.getEmail() + ", Avatar: " + user.getAvatar());
+        });
+    }
 
-        List<String> avatarUrls = response.jsonPath().getList("data.avatar");
-        Set<String> uniqueAvatarFileNames = new HashSet<>();
+    @Step("Проверка уникальности имен файлов аватаров")
+    private void checkAvatarUniqueness(ApiResponse response) {
+        Set<String> uniqueAvatarFileNames = response.getData().stream()
+                .map(User::getAvatar)
+                .collect(Collectors.toSet());
 
-        for (String url : avatarUrls) {
-            String fileName = url.substring(url.lastIndexOf('/') + 1);
-            uniqueAvatarFileNames.add(fileName);
-        }
-
-        Assert.assertEquals(uniqueAvatarFileNames.size(), avatarUrls.size(), "Avatar filenames are not unique");
+        Assert.assertEquals(uniqueAvatarFileNames.size(), response.getData().size(), "Имена файлов аватаров пользователей не уникальны");
     }
 }
