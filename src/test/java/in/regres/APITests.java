@@ -1,10 +1,7 @@
 package in.regres;
 
 import io.qameta.allure.Step;
-import org.example.data.ApiResponse;
-import org.example.data.LoginData;
-import org.example.data.LoginResponse;
-import org.example.data.User;
+import org.example.data.*;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -78,4 +75,23 @@ public class APITests {
 
         Assert.assertNotNull(loginResponse.getToken(), "Токен не был получен");
     }
+    @Test
+    @Step("Тест неуспешной авторизации из-за отсутствия пароля")
+    public void testUnsuccessfulLoginDueToMissingPassword() {
+        LoginData loginData = new LoginData("peter@klaven", null); // Отсутствие пароля
+
+        ErrorResponse errorResponse = given().spec(createRequestSpecification())
+                .body(loginData)
+                .log().all()  // Логирование запроса
+                .when()
+                .post("/login")
+                .then()
+                .log().all()  // Логирование ответа
+                .statusCode(400)  // Ожидаемый код ошибки
+                .extract()
+                .as(ErrorResponse.class);
+
+        Assert.assertEquals(errorResponse.getError(), "Missing password", "Ошибка не соответствует ожидаемой: 'Missing password'");
+    }
+
 }
