@@ -93,5 +93,30 @@ public class APITests {
 
         Assert.assertEquals(errorResponse.getError(), "Missing password", "Ошибка не соответствует ожидаемой: 'Missing password'");
     }
+    @Test
+    @Step("Проверка сортировки ресурсов по годам")
+    public void testResourcesAreSortedByYear() {
+        ResourceResponse response = given().spec(createRequestSpecification())
+                .when()
+                .get("/unknown")
+                .then()
+                .extract()
+                .as(ResourceResponse.class);
+// Выводим данные для проверки порядка
+        for (ResourceData resource : response.getData()) {
+            System.out.println("ID: " + resource.getId() + ", Name: " + resource.getName() + ", Year: " + resource.getYear());
+        }
+        // Проверка, что данные отсортированы по годам
+        boolean isSorted = isSortedByYear(response.getData());
+        Assert.assertTrue(isSorted, "Данные не отсортированы по годам");
+    }
 
+    private boolean isSortedByYear(List<ResourceData> data) {
+        for (int i = 0; i < data.size() - 1; i++) {
+            if (data.get(i).getYear() > data.get(i + 1).getYear()) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
