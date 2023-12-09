@@ -67,11 +67,11 @@ public class APITests {
 
         LoginResponse loginResponse = given().spec(createRequestSpecification())
                 .body(loginData)
-                .log().all()  // Логирование запроса
+                .log().all()
                 .when()
                 .post("/login")
                 .then()
-                .log().all()  // Логирование ответа
+                .log().all()
                 .statusCode(200)
                 .extract()
                 .as(LoginResponse.class);
@@ -85,12 +85,12 @@ public class APITests {
 
         ErrorResponse errorResponse = given().spec(createRequestSpecification())
                 .body(loginData)
-                .log().all()  // Логирование запроса
+                .log().all()
                 .when()
                 .post("/login")
                 .then()
-                .log().all()  // Логирование ответа
-                .statusCode(400)  // Ожидаемый код ошибки
+                .log().all()
+                .statusCode(400)
                 .extract()
                 .as(ErrorResponse.class);
 
