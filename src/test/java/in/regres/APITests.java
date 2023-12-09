@@ -2,6 +2,8 @@ package in.regres;
 
 import io.qameta.allure.Step;
 import org.example.data.ApiResponse;
+import org.example.data.LoginData;
+import org.example.data.LoginResponse;
 import org.example.data.User;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -57,5 +59,23 @@ public class APITests {
                 .collect(Collectors.toSet());
 
         Assert.assertEquals(uniqueAvatarFileNames.size(), response.getData().size(), "Имена файлов аватаров пользователей не уникальны");
+    }
+    @Test
+    @Step("Тест успешной авторизации")
+    public void testSuccessfulLogin() {
+        LoginData loginData = new LoginData("eve.holt@reqres.in", "cityslicka");
+
+        LoginResponse loginResponse = given().spec(createRequestSpecification())
+                .body(loginData)
+                .log().all()  // Логирование запроса
+                .when()
+                .post("/login")
+                .then()
+                .log().all()  // Логирование ответа
+                .statusCode(200)
+                .extract()
+                .as(LoginResponse.class);
+
+        Assert.assertNotNull(loginResponse.getToken(), "Токен не был получен");
     }
 }
