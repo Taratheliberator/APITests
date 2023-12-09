@@ -1,12 +1,15 @@
 package in.regres;
 
 import io.qameta.allure.Step;
+import io.restassured.RestAssured;
 import org.example.data.*;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.restassured.RestAssured.given;
@@ -119,4 +122,31 @@ public class APITests {
         }
         return true;
     }
+    @Test
+    @Step("Проверка количества XML тегов")
+    public void testXmlTagCount() {
+        String responseXml = RestAssured.given()
+                .header("Content-Type", "application/xml")
+                .when()
+                .get("https://gateway.autodns.com/")
+                .then()
+                .extract()
+                .asString();
+
+        int tagCount = countXmlTags(responseXml);
+        Assert.assertEquals(tagCount, 14, "Количество XML тегов не соответствует ожидаемому");
+    }
+
+    private int countXmlTags(String xml) {
+        Pattern pattern = Pattern.compile("<\\w+>");
+        Matcher matcher = pattern.matcher(xml);
+        int count = 0;
+        while (matcher.find()) {
+            count++;
+        }
+        return count;
+    }
 }
+
+
+
