@@ -105,7 +105,7 @@ public class APITests {
                 .then()
                 .extract()
                 .as(ResourceResponse.class);
-// Выводим данные для проверки порядка
+// Выводим данные для проверки_порядка
         for (ResourceData resource : response.getData()) {
             System.out.println("ID: " + resource.getId() + ", Name: " + resource.getName() + ", Year: " + resource.getYear());
         }
